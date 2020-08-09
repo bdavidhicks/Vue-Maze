@@ -14,7 +14,7 @@
 
 <script>
 export default {
-  props: ['cell', 'size', 'duration', 'borderWidth', 'borderColor', 'color', 'visitedColor'],
+  props: ['cell', 'size', 'duration', 'borderWidth', 'borderColor', 'color', 'visitedColor', 'pathColor'],
   computed: {
     outerCellStyle() {
       const h = (this.cell.edge.top || this.cell.edge.bottom) ? `${this.size + this.borderWidth / 2}px` : `${this.size}px`;
@@ -83,7 +83,7 @@ export default {
       if (this.cell.start) {
         bgColor = 'green';
       } else if (this.cell.end) {
-        bgColor = 'red';
+        bgColor = 'green';
       }
       const h = `${this.size - this.borderWidth}px`;
       const w = `${this.size - this.borderWidth}px`;
@@ -123,7 +123,7 @@ export default {
     bottomCenterStyle() {
       let { bgColor } = this;
       if (this.cell.end) {
-        bgColor = 'red';
+        bgColor = 'green';
       }
       const h = (this.cell.edge.bottom) ? `${this.borderWidth}px` : `${this.borderWidth / 2}px`;
       const w = `${this.size - this.borderWidth}px`;
@@ -149,6 +149,9 @@ export default {
       };
     },
     bgColor() {
+      if (this.cell.isPath) {
+        return this.pathColor;
+      }
       return (this.cell.visited) ? this.visitedColor : this.color;
     },
   },

@@ -20,7 +20,7 @@
         </div>
       </div>
       <div class="d-flex align-items-center justify-content-center" v-for="(row, rowIdx) in cells" :key="rowIdx">
-        <app-cell class="d-flex" v-for="(cell, colIdx) in row" :key="colIdx" :cell="cell" :size="cellSize" :duration="duration" :borderWidth="borderWidth" :color="cellColor" :borderColor="cellBorderColor" :visitedColor="getVisitedColor(cell)"></app-cell>
+        <app-cell class="d-flex" v-for="(cell, colIdx) in row" :key="colIdx" :cell="cell" :size="cellSize" :duration="duration" :borderWidth="borderWidth" :color="cellColor" :borderColor="cellBorderColor" :visitedColor="cellVisitedColor" :pathColor="cellPathColor"></app-cell>
       </div>
     </div>
   </div>
@@ -40,7 +40,7 @@ export default {
       cells: [],
       mapWidth: null,
       mapHeight: null,
-      cellSize: 150,
+      cellSize: 40,
       stepTime: 50,
       timeout: null,
       padding: 200,
@@ -49,7 +49,7 @@ export default {
       debounce: null,
       cellColor: 'lightgray',
       cellVisitedColor: 'darkred',
-      cellPathColor: 'pink',
+      cellPathColor: 'green',
       cellBorderColor: 'black',
       isReset: true,
       path: [],
@@ -66,6 +66,7 @@ export default {
       }, 600);
     },
     solveMap() {
+      this.path = [];
       let c = this.cells.flatMap((row) => row).filter((cell) => cell.start)[0];
       while (!c.end) {
         c.visited = true;
@@ -73,31 +74,37 @@ export default {
         const directions = Object.keys(neighbors).filter((key) => !c.walls[key]); //eslint-disable-line
         if (directions.length > 0) {
           this.path.push({ row: c.row, col: c.col });
+          c.isPath = true;
           const direction = directions[Math.floor(Math.random() * directions.length)];
           c = neighbors[direction];
         } else {
+          c.isPath = false;
           const prev = this.path.pop();
           c = this.cells[prev.row][prev.col];
         }
       }
       this.path.push({ row: c.row, col: c.col });
       c.visited = true;
+      c.isPath = true;
     },
     solveMapInSteps() {
       const c = this.cells.flatMap((row) => row).filter((cell) => cell.start)[0];
-      const path = [];
-      this.timeout = setTimeout(() => this.solveMapNextStep(c, path), this.stepTime);
+      this.path = [];
+      this.timeout = setTimeout(() => this.solveMapNextStep(c), this.stepTime);
     },
     solveMapNextStep(cell) {
       let c = cell;
       c.visited = true;
+      c.isPath = true;
       const neighbors = this.getUnvisitedNeighbors(c);
       const directions = Object.keys(neighbors).filter((key) => !c.walls[key]); //eslint-disable-line
       if (directions.length > 0) {
         this.path.push({ row: c.row, col: c.col });
+        c.isPath = true;
         const direction = directions[Math.floor(Math.random() * directions.length)];
         c = neighbors[direction];
       } else {
+        c.isPath = false;
         const prev = this.path.pop();
         c = this.cells[prev.row][prev.col];
       }
@@ -106,10 +113,12 @@ export default {
       } else {
         this.path.push({ row: c.row, col: c.col });
         c.visited = true;
+        c.isPath = true;
       }
     },
     resetMap() {
       clearTimeout(this.timeout);
+      this.path = [];
       this.mapHeight = Math.floor((this.windowHeight - this.padding) / this.cellSize);
       this.mapWidth = Math.floor((this.windowWidth - this.padding) / this.cellSize);
       const newCells = [];
@@ -122,6 +131,7 @@ export default {
             end: r === this.mapHeight - 1 && c === this.mapWidth - 1,
             row: r,
             col: c,
+            isPath: false,
             walls: {
               north: r !== 0 || c !== 0,
               east: true,
@@ -229,9 +239,6 @@ export default {
       this.windowHeight = window.innerHeight;
       this.windowWidth = window.innerWidth;
       this.resetMap();
-    },
-    getVisitedColor(cell) {
-      return (this.path.filter((p) => p.row === cell.row && p.col === cell.col).length) ? this.cellPathColor : this.cellVisitedColor;
     },
   },
   computed: {
