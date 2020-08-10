@@ -5,17 +5,18 @@
       <div class="row mt-3">
         <div class="col mb-3">
           <form class="form-inline justify-content-center">
+            <button class="btn btn-warning" @click.prevent="createMap">Create Map Instantly</button>
             <button class="btn btn-primary" @click.prevent="createMapInSteps">Create Map In Steps</button>
-            <button class="btn btn-secondary" @click.prevent="createMap">Create Instantly</button>
-            <button class="btn btn-danger" @click.prevent="resetMap">Reset</button>
+            <button class="btn btn-danger" :disabled="state === 'reset'" @click.prevent="resetMap">Reset Map</button>
             <div class="input-group">
-              <input type="text" class="form-control form-control-inline" placeholder="Cell Size" :value="cellSize" @input="cellSizeInput">
+              <input type="text" class="form-control" placeholder="Cell Size" :value="cellSize" @input="cellSizeInput">
               <div class="input-group-append">
                 <span class="input-group-text">px</span>
               </div>
             </div>
-            <button class="btn btn-primary" :class="{ disabled: this.isReset }" @click.prevent="solveMap">Solve Map</button>
-            <button class="btn btn-success" :class="{ disabled: this.isReset }" @click.prevent="solveMapInSteps">Solve Map In Steps</button>
+            <button class="btn btn-primary" v-if="state === 'created'" @click.prevent="solveMap">Solve Map Instantly</button>
+            <button class="btn btn-success" v-if="state === 'created'" @click.prevent="solveMapInSteps">Solve Map In Steps</button>
+            <button class="btn btn-danger" v-if="state === 'solved' || state === 'solving'" @click.prevent="clearSolution">Clear Solution</button>
           </form>
         </div>
       </div>
@@ -40,8 +41,8 @@ export default {
       cells: [],
       mapWidth: null,
       mapHeight: null,
-      cellSize: 40,
-      stepTime: 50,
+      cellSize: 60,
+      stepTime: 5,
       timeout: null,
       padding: 200,
       duration: 500,
@@ -51,7 +52,7 @@ export default {
       cellVisitedColor: 'darkred',
       cellPathColor: 'green',
       cellBorderColor: 'black',
-      isReset: true,
+      state: 'reset',
       path: [],
     };
   },
@@ -65,7 +66,18 @@ export default {
         }
       }, 600);
     },
+    clearSolution() {
+      clearTimeout(this.timeout);
+      this.cells.forEach((row) => row.forEach((c) => {
+        const cell = c;
+        cell.visited = false;
+        cell.isPath = false;
+      }));
+      this.path = [];
+      this.state = 'created';
+    },
     solveMap() {
+      this.state = 'solving';
       this.path = [];
       let c = this.cells.flatMap((row) => row).filter((cell) => cell.start)[0];
       while (!c.end) {
@@ -86,11 +98,13 @@ export default {
       this.path.push({ row: c.row, col: c.col });
       c.visited = true;
       c.isPath = true;
+      this.state = 'solved';
     },
     solveMapInSteps() {
       const c = this.cells.flatMap((row) => row).filter((cell) => cell.start)[0];
       this.path = [];
       this.timeout = setTimeout(() => this.solveMapNextStep(c), this.stepTime);
+      this.state = 'solving';
     },
     solveMapNextStep(cell) {
       let c = cell;
@@ -114,6 +128,7 @@ export default {
         this.path.push({ row: c.row, col: c.col });
         c.visited = true;
         c.isPath = true;
+        this.state = 'solved';
       }
     },
     resetMap() {
@@ -149,10 +164,12 @@ export default {
         newCells.push(newRow);
       }
       this.cells = newCells;
-      this.isReset = true;
+      this.clearSolution();
+      this.state = 'reset';
     },
     createMapInSteps() {
       this.resetMap();
+      this.state = 'creating';
       this.cells[0][0].visited = true;
       this.createMapNextStep(this.cells[0][0]);
     },
@@ -183,11 +200,12 @@ export default {
         c.visited = true;
         this.timeout = setTimeout(() => this.createMapNextStep(c), this.stepTime);
       } else {
-        this.timeout = setTimeout(() => this.cells.forEach((row) => row.forEach((item) => item.visited = false), this.isReset = false), this.duration); // eslint-disable-line
+        this.timeout = setTimeout(() => this.cells.forEach((row) => row.forEach((item) => item.visited = false), this.state = 'created'), this.duration); // eslint-disable-line
       }
     },
     createMap() {
       this.resetMap();
+      this.state = 'creating';
       let c = this.cells[0][0];
       let neighbors = this.getUnvisitedNeighbors(c);
       c.visited = true;
@@ -217,7 +235,7 @@ export default {
         }
       }
       this.cells.forEach((row) => row.forEach((item) => item.visited = false)); // eslint-disable-line
-      this.isReset = false;
+      this.state = 'created';
     },
     getUnvisitedNeighbors(cell) {
       const neighbors = {};
