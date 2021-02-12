@@ -1,4 +1,4 @@
-# vue-maps
+# vue-maze
 
 ## Project setup
 ```

@@ -1,21 +1,21 @@
 <template>
   <div>
-    <h1>Map Generator</h1>
+    <h1>Maze Generator</h1>
     <div class="container">
       <div class="row mt-3">
         <div class="col mb-3">
           <form class="form-inline justify-content-center">
-            <button class="btn btn-warning" @click.prevent="createMap">Create Map Instantly</button>
-            <button class="btn btn-primary" @click.prevent="createMapInSteps">Create Map In Steps</button>
-            <button class="btn btn-danger" :disabled="state === 'reset'" @click.prevent="resetMap">Reset Map</button>
+            <button class="btn btn-warning" @click.prevent="createMaze">Create Maze Instantly</button>
+            <button class="btn btn-primary" @click.prevent="createMazeInSteps">Create Maze In Steps</button>
+            <button class="btn btn-danger" :disabled="state === 'reset'" @click.prevent="resetMaze">Reset Maze</button>
             <div class="input-group">
               <input type="text" class="form-control" placeholder="Cell Size" :value="cellSize" @input="cellSizeInput">
               <div class="input-group-append">
                 <span class="input-group-text">px</span>
               </div>
             </div>
-            <button class="btn btn-primary" v-if="state === 'created'" @click.prevent="solveMap">Solve Map Instantly</button>
-            <button class="btn btn-success" v-if="state === 'created'" @click.prevent="solveMapInSteps">Solve Map In Steps</button>
+            <button class="btn btn-primary" v-if="state === 'created'" @click.prevent="solveMaze">Solve Maze Instantly</button>
+            <button class="btn btn-success" v-if="state === 'created'" @click.prevent="solveMazeInSteps">Solve Maze In Steps</button>
             <button class="btn btn-danger" v-if="state === 'solved' || state === 'solving'" @click.prevent="clearSolution">Clear Solution</button>
           </form>
         </div>
@@ -39,8 +39,8 @@ export default {
       windowHeight: window.innerHeight,
       windowWidth: window.innerWidth,
       cells: [],
-      mapWidth: null,
-      mapHeight: null,
+      mazeWidth: null,
+      mazeHeight: null,
       cellSize: 60,
       stepTime: 5,
       timeout: null,
@@ -62,7 +62,7 @@ export default {
       this.debounce = setTimeout(() => {
         if (!Number.isNaN(event.target.value) && Number(event.target.value) > 10) {
           this.cellSize = Number(event.target.value);
-          this.resetMap();
+          this.resetMaze();
         }
       }, 600);
     },
@@ -76,7 +76,7 @@ export default {
       this.path = [];
       this.state = 'created';
     },
-    solveMap() {
+    solveMaze() {
       this.state = 'solving';
       this.path = [];
       let c = this.cells.flatMap((row) => row).filter((cell) => cell.start)[0];
@@ -100,13 +100,13 @@ export default {
       c.isPath = true;
       this.state = 'solved';
     },
-    solveMapInSteps() {
+    solveMazeInSteps() {
       const c = this.cells.flatMap((row) => row).filter((cell) => cell.start)[0];
       this.path = [];
-      this.timeout = setTimeout(() => this.solveMapNextStep(c), this.stepTime);
+      this.timeout = setTimeout(() => this.solveMazeNextStep(c), this.stepTime);
       this.state = 'solving';
     },
-    solveMapNextStep(cell) {
+    solveMazeNextStep(cell) {
       let c = cell;
       c.visited = true;
       c.isPath = true;
@@ -123,7 +123,7 @@ export default {
         c = this.cells[prev.row][prev.col];
       }
       if (!c.end) {
-        this.timeout = setTimeout(() => this.solveMapNextStep(c), this.stepTime);
+        this.timeout = setTimeout(() => this.solveMazeNextStep(c), this.stepTime);
       } else {
         this.path.push({ row: c.row, col: c.col });
         c.visited = true;
@@ -131,33 +131,33 @@ export default {
         this.state = 'solved';
       }
     },
-    resetMap() {
+    resetMaze() {
       clearTimeout(this.timeout);
       this.path = [];
-      this.mapHeight = Math.floor((this.windowHeight - this.padding) / this.cellSize);
-      this.mapWidth = Math.floor((this.windowWidth - this.padding) / this.cellSize);
+      this.mazeHeight = Math.floor((this.windowHeight - this.padding) / this.cellSize);
+      this.mazeWidth = Math.floor((this.windowWidth - this.padding) / this.cellSize);
       const newCells = [];
-      for (let r = 0; r < this.mapHeight; r += 1) {
+      for (let r = 0; r < this.mazeHeight; r += 1) {
         const newRow = [];
-        for (let c = 0; c < this.mapWidth; c += 1) {
+        for (let c = 0; c < this.mazeWidth; c += 1) {
           newRow.push({
             visited: false,
             start: r === 0 && c === 0,
-            end: r === this.mapHeight - 1 && c === this.mapWidth - 1,
+            end: r === this.mazeHeight - 1 && c === this.mazeWidth - 1,
             row: r,
             col: c,
             isPath: false,
             walls: {
               north: r !== 0 || c !== 0,
               east: true,
-              south: r !== this.mapHeight - 1 || c !== this.mapWidth - 1,
+              south: r !== this.mazeHeight - 1 || c !== this.mazeWidth - 1,
               west: true,
             },
             edge: {
               top: r === 0,
-              bottom: r === this.mapHeight - 1,
+              bottom: r === this.mazeHeight - 1,
               left: c === 0,
-              right: c === this.mapWidth - 1,
+              right: c === this.mazeWidth - 1,
             },
           });
         }
@@ -167,13 +167,13 @@ export default {
       this.clearSolution();
       this.state = 'reset';
     },
-    createMapInSteps() {
-      this.resetMap();
+    createMazeInSteps() {
+      this.resetMaze();
       this.state = 'creating';
       this.cells[0][0].visited = true;
-      this.createMapNextStep(this.cells[0][0]);
+      this.createMazeNextStep(this.cells[0][0]);
     },
-    createMapNextStep(cell) {
+    createMazeNextStep(cell) {
       let c = cell;
       const neighbors = this.getUnvisitedNeighbors(c);
       if (Object.keys(neighbors).length > 0) {
@@ -193,18 +193,18 @@ export default {
         }
         c = neighbors[direction];
         c.visited = true;
-        this.timeout = setTimeout(() => this.createMapNextStep(c), this.stepTime);
+        this.timeout = setTimeout(() => this.createMazeNextStep(c), this.stepTime);
       } else if (this.cells.flatMap((row) => row.some((item) => !item.visited)).some((value) => value)) {
         const visitedChoices = this.cells.flatMap((row) => row.filter((item) => item.visited && Object.keys(this.getUnvisitedNeighbors(item)).length > 0));
         c = visitedChoices[Math.floor(Math.random() * visitedChoices.length)];
         c.visited = true;
-        this.timeout = setTimeout(() => this.createMapNextStep(c), this.stepTime);
+        this.timeout = setTimeout(() => this.createMazeNextStep(c), this.stepTime);
       } else {
         this.timeout = setTimeout(() => this.cells.forEach((row) => row.forEach((item) => item.visited = false), this.state = 'created'), this.duration); // eslint-disable-line
       }
     },
-    createMap() {
-      this.resetMap();
+    createMaze() {
+      this.resetMaze();
       this.state = 'creating';
       let c = this.cells[0][0];
       let neighbors = this.getUnvisitedNeighbors(c);
@@ -242,13 +242,13 @@ export default {
       if (cell.row > 0 && !this.cells[cell.row - 1][cell.col].visited) {
         neighbors.north = this.cells[cell.row - 1][cell.col];
       }
-      if (cell.row < this.mapHeight - 1 && !this.cells[cell.row + 1][cell.col].visited) {
+      if (cell.row < this.mazeHeight - 1 && !this.cells[cell.row + 1][cell.col].visited) {
         neighbors.south = this.cells[cell.row + 1][cell.col];
       }
       if (cell.col > 0 && !this.cells[cell.row][cell.col - 1].visited) {
         neighbors.west = this.cells[cell.row][cell.col - 1];
       }
-      if (cell.col < this.mapWidth - 1 && !this.cells[cell.row][cell.col + 1].visited) {
+      if (cell.col < this.mazeWidth - 1 && !this.cells[cell.row][cell.col + 1].visited) {
         neighbors.east = this.cells[cell.row][cell.col + 1];
       }
       return neighbors;
@@ -256,14 +256,14 @@ export default {
     onResize() {
       this.windowHeight = window.innerHeight;
       this.windowWidth = window.innerWidth;
-      this.resetMap();
+      this.resetMaze();
     },
   },
   computed: {
     containerStyle() {
       return {
-        'padding-left': `${Math.floor((this.windowWidth - this.mapWidth * this.cellSize) / 2)}px`,
-        'padding-top': `${Math.max(0, Math.floor((this.windowHeight - this.mapHeight * this.cellSize - 225) / 2))}px`,
+        'padding-left': `${Math.floor((this.windowWidth - this.mazeWidth * this.cellSize) / 2)}px`,
+        'padding-top': `${Math.max(0, Math.floor((this.windowHeight - this.mazeHeight * this.cellSize - 225) / 2))}px`,
       };
     },
   },
@@ -271,7 +271,7 @@ export default {
     this.$nextTick(() => {
       window.addEventListener('resize', this.onResize);
     });
-    this.resetMap();
+    this.resetMaze();
   },
   beforeDestroy() {
     window.removeEventListener('resize', this.onResize);

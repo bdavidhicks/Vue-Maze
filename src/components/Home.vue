@@ -1,16 +1,16 @@
 <template>
   <div>
     <h1>Home</h1>
-    <app-map-generator></app-map-generator>
+    <app-maze-generator></app-maze-generator>
   </div>
 </template>
 
 <script>
-import MapGenerator from './MapGenerator.vue';
+import MazeGenerator from './MazeGenerator.vue';
 
 export default {
   components: {
-    appMapGenerator: MapGenerator,
+    appMazeGenerator: MazeGenerator,
   },
 };
 </script>
