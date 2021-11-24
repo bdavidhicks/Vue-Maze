@@ -41,8 +41,8 @@ export default {
       cells: [],
       mazeWidth: null,
       mazeHeight: null,
-      cellSize: 60,
-      stepTime: 5,
+      cellSize: 40,
+      stepTime: 1,
       timeout: null,
       padding: 200,
       duration: 500,
@@ -60,7 +60,7 @@ export default {
     cellSizeInput(event) {
       clearTimeout(this.debounce);
       this.debounce = setTimeout(() => {
-        if (!Number.isNaN(event.target.value) && Number(event.target.value) > 10) {
+        if (!Number.isNaN(event.target.value) && Number(event.target.value) >= 10) {
           this.cellSize = Number(event.target.value);
           this.resetMaze();
         }
@@ -103,7 +103,11 @@ export default {
     solveMazeInSteps() {
       const c = this.cells.flatMap((row) => row).filter((cell) => cell.start)[0];
       this.path = [];
-      this.timeout = setTimeout(() => this.solveMazeNextStep(c), this.stepTime);
+      if (this.stepTime > 0) {
+        this.timeout = setTimeout(() => this.solveMazeNextStep(c), this.stepTime);
+      } else {
+        this.solveMazeNextStep(c);
+      }
       this.state = 'solving';
     },
     solveMazeNextStep(cell) {
@@ -123,7 +127,11 @@ export default {
         c = this.cells[prev.row][prev.col];
       }
       if (!c.end) {
-        this.timeout = setTimeout(() => this.solveMazeNextStep(c), this.stepTime);
+        if (this.stepTime > 0) {
+          this.timeout = setTimeout(() => this.solveMazeNextStep(c), this.stepTime);
+        } else {
+          this.solveMazeNextStep(c);
+        }
       } else {
         this.path.push({ row: c.row, col: c.col });
         c.visited = true;
@@ -193,12 +201,20 @@ export default {
         }
         c = neighbors[direction];
         c.visited = true;
-        this.timeout = setTimeout(() => this.createMazeNextStep(c), this.stepTime);
+        if (this.stepTime > 0) {
+          this.timeout = setTimeout(() => this.createMazeNextStep(c), this.stepTime);
+        } else {
+          this.createMazeNextStep(c);
+        }
       } else if (this.cells.flatMap((row) => row.some((item) => !item.visited)).some((value) => value)) {
         const visitedChoices = this.cells.flatMap((row) => row.filter((item) => item.visited && Object.keys(this.getUnvisitedNeighbors(item)).length > 0));
         c = visitedChoices[Math.floor(Math.random() * visitedChoices.length)];
         c.visited = true;
-        this.timeout = setTimeout(() => this.createMazeNextStep(c), this.stepTime);
+        if (this.stepTime > 0) {
+          this.timeout = setTimeout(() => this.createMazeNextStep(c), this.stepTime);
+        } else {
+          this.createMazeNextStep(c);
+        }
       } else {
         this.timeout = setTimeout(() => this.cells.forEach((row) => row.forEach((item) => item.visited = false), this.state = 'created'), this.duration); // eslint-disable-line
       }
